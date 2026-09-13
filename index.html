@@ -1,13 +1,234 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es"> 
 <head>
-    <meta charset="UTF-8">
-    <title>Mi Primera Página</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calidad de Datos — Consulta Power Query</title>
+<style>
+:root{
+  --verde-oscuro: #0F3D22;
+  --verde-oscuro-2: #14532D;
+  --verde-medio: #217346;
+  --verde-medio-2: #2E8B57;
+  --verde-claro: #E4F2E6;
+  --verde-claro-2: #CFE8D4;
+  --oro: #C9A227;
+  --texto: #10241A;
+  --texto-dim: #4B6156;
+  --font-ui: 'Segoe UI', 'Inter', system-ui, sans-serif;
+  --font-mono: 'Consolas', 'IBM Plex Mono', monospace;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{
+  font-family: var(--font-ui);
+  background: var(--verde-claro);
+  color: var(--texto);
+  padding: 24px;
+}
+.topbar{
+  background: linear-gradient(180deg, var(--verde-oscuro-2) 0%, var(--verde-oscuro) 100%);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.topbar h1{ font-size: 18px; font-weight: 700; }
+.topbar p{ font-size: 12.5px; color: #B9D9C4; margin-top: 4px; }
+
+.winner-card{
+  background: linear-gradient(135deg, var(--verde-medio) 0%, var(--verde-medio-2) 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 22px 26px;
+  margin-bottom: 22px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  position: relative;
+  overflow: hidden;
+}
+.winner-tag{
+  display:inline-block;
+  background: var(--oro);
+  color: #10241A;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+.winner-card h2{ font-size: 24px; margin-bottom: 14px; }
+.winner-metrics{
+  display:flex; flex-wrap: wrap; gap: 22px;
+}
+.metric{ min-width: 140px; }
+.metric .val{ font-size: 22px; font-weight: 700; font-family: var(--font-mono); }
+.metric .lab{ font-size: 12px; color: #DDF0E1; }
+
+.panel{
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+.panel h3{ font-size: 15px; color: var(--verde-oscuro-2); margin-bottom: 12px; }
+
+.sort-buttons{ display:flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.sort-buttons button{
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--verde-medio-2);
+  background: #fff;
+  color: var(--verde-oscuro-2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+.sort-buttons button.active{
+  background: var(--verde-medio);
+  color: #fff;
+}
+
+table{ width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td{ text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--verde-claro-2); }
+th{ color: var(--texto-dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; }
+tr.top-row td{ font-weight: 700; background: var(--verde-claro); }
+td.num, th.num{ text-align: right; font-family: var(--font-mono); }
+
+.cleanup-list{ list-style: none; }
+.cleanup-list li{
+  display:flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0;
+  font-size: 13.5px;
+  border-bottom: 1px dashed var(--verde-claro-2);
+}
+.cleanup-list li:last-child{ border-bottom: none; }
+.check{
+  flex: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--verde-medio);
+  color: #fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size: 12px; font-weight: 700;
+}
+.query-steps{
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--texto-dim);
+  background: var(--verde-claro);
+  border-radius: 8px;
+  padding: 12px 14px;
+  line-height: 1.7;
+}
+</style>
 </head>
 <body>
 
-    <h1>¡Hola Mundo!</h1>
-    <p>Esta es mi página web guardada en GitHub.</p>
+<div class="topbar">
+  <h1>Calidad de Datos — Consulta en Power Query</h1>
+  <p>Dashboard_Transporte_Logistico.xlsx · Consulta: Rentabilidad por transportista activo</p>
+</div>
+
+<div class="winner-card">
+  <span class="winner-tag">Empresa activa más rentable</span>
+  <h2 id="winnerName">Transportes Lima Norte S.A.C.</h2>
+  <div class="winner-metrics">
+    <div class="metric"><div class="val" id="wIngreso">S/ 175,685.62</div><div class="lab">Ingreso total generado</div></div>
+    <div class="metric"><div class="val" id="wSolesHora">S/ 126.54</div><div class="lab">Soles por hora de operación</div></div>
+    <div class="metric"><div class="val" id="wViajes">71</div><div class="lab">Viajes completados</div></div>
+    <div class="metric"><div class="val" id="wTiempo">19.56 h</div><div class="lab">Tiempo promedio por viaje</div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h3>Ranking de empresas activas — ordena por el criterio que te interese</h3>
+  <div class="sort-buttons">
+    <button data-key="soles_por_hora" class="active">S/ por hora (más dinero, menos tiempo)</button>
+    <button data-key="ingreso_total">Ingreso total</button>
+    <button data-key="tiempo_prom_h">Tiempo promedio (menor primero)</button>
+    <button data-key="num_viajes">N.º de viajes</button>
+  </div>
+  <table id="rankTable">
+    <thead>
+      <tr>
+        <th>Empresa transportista (activa)</th>
+        <th class="num">Ingreso total</th>
+        <th class="num">Tiempo total (h)</th>
+        <th class="num">Viajes</th>
+        <th class="num">Tiempo prom. (h)</th>
+        <th class="num">S/ por hora</th>
+      </tr>
+    </thead>
+    <tbody id="rankBody"></tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h3>Consulta aplicada en Power Query</h3>
+  <div class="query-steps">
+    1. Origen: Viajes ×(combinar)× Vehículos ×(combinar)× Empresas_Transportistas<br>
+    2. Filtro: Empresas_Transportistas[estado] = "Activo"<br>
+    3. Columna personalizada: duracion_h = fecha_hora_llegada_real − fecha_hora_salida_real<br>
+    4. Agrupar por: nombre_transportista → SUM(ingreso_flete_soles), SUM(duracion_h), COUNT(id_viaje)<br>
+    5. Columna personalizada: soles_por_hora = ingreso_total / tiempo_total_h<br>
+    6. Ordenar descendente por soles_por_hora
+  </div>
+</div>
+
+<div class="panel">
+  <h3>Limpieza previa que hizo posible esta consulta</h3>
+  <ul class="cleanup-list">
+    <li><span class="check">✓</span> Montos de flete con texto o comas ("S/ 1,164.98") convertidos a números reales antes de sumar</li>
+    <li><span class="check">✓</span> Filas de viajes duplicadas eliminadas para no inflar el conteo ni el ingreso</li>
+    <li><span class="check">✓</span> Fechas de salida/llegada normalizadas a un mismo formato para poder restarlas</li>
+    <li><span class="check">✓</span> Registros sin fecha de llegada real descartados de este cálculo (viaje no cerrado)</li>
+    <li><span class="check">✓</span> Nombres de empresas con espacios extra o mayúsculas inconsistentes estandarizados antes de agrupar</li>
+  </ul>
+</div>
+
+<script>
+const data = [{"nombre": "Transportes Lima Norte S.A.C.", "ingreso_total": 175685.62, "tiempo_total_h": 1388.41, "num_viajes": 71, "tiempo_prom_h": 19.56, "soles_por_hora": 126.54}, {"nombre": "Carga Pesada Costa Norte S.A.C.", "ingreso_total": 96870.75, "tiempo_total_h": 770.94, "num_viajes": 37, "tiempo_prom_h": 20.84, "soles_por_hora": 125.65}, {"nombre": "Transportes Selva Verde S.R.L.", "ingreso_total": 149874.02, "tiempo_total_h": 1253.86, "num_viajes": 64, "tiempo_prom_h": 19.59, "soles_por_hora": 119.53}, {"nombre": "Fletes del Sur E.I.R.L.", "ingreso_total": 114899.33, "tiempo_total_h": 967.89, "num_viajes": 49, "tiempo_prom_h": 19.75, "soles_por_hora": 118.71}];
+
+function fmtMoney(n){ return 'S/ ' + n.toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+function render(sortKey, ascending){
+  const sorted = [...data].sort((a,b) => ascending ? a[sortKey]-b[sortKey] : b[sortKey]-a[sortKey]);
+  const body = document.getElementById('rankBody');
+  body.innerHTML = sorted.map((r, i) => `
+    <tr class="${i===0 ? 'top-row' : ''}">
+      <td>${r.nombre}</td>
+      <td class="num">${fmtMoney(r.ingreso_total)}</td>
+      <td class="num">${r.tiempo_total_h.toFixed(1)}</td>
+      <td class="num">${r.num_viajes}</td>
+      <td class="num">${r.tiempo_prom_h.toFixed(2)}</td>
+      <td class="num">${fmtMoney(r.soles_por_hora)}</td>
+    </tr>
+  `).join('');
+
+  const top = sorted[0];
+  document.getElementById('winnerName').textContent = top.nombre;
+  document.getElementById('wIngreso').textContent = fmtMoney(top.ingreso_total);
+  document.getElementById('wSolesHora').textContent = fmtMoney(top.soles_por_hora);
+  document.getElementById('wViajes').textContent = top.num_viajes;
+  document.getElementById('wTiempo').textContent = top.tiempo_prom_h.toFixed(2) + ' h';
+}
+
+document.querySelectorAll('.sort-buttons button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-buttons button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const key = btn.dataset.key;
+    const ascending = key === 'tiempo_prom_h';
+    render(key, ascending);
+  });
+});
+
+render('soles_por_hora', false);
+</script>
 
 </body>
 </html>
